@@ -13,14 +13,17 @@ import android.content.Intent;
 import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
+import android.widget.AutoCompleteTextView;
 import android.widget.ImageView;
 
 import com.alaric.norris.study.retrofitstudy.ApiService;
 import com.alaric.norris.study.retrofitstudy.GetIpInfoResponse;
 import com.alaric.norris.study.retrofitstudy.RetrofitActivity;
 import com.alaric.norris.study.rxjavastudy.RxJavaStudyActivity;
+import com.jakewharton.rxbinding.view.RxView;
 
 import butterknife.ButterKnife;
+import butterknife.InjectView;
 import butterknife.OnClick;
 import retrofit2.Retrofit;
 import retrofit2.adapter.rxjava.RxJavaCallAdapterFactory;
@@ -45,6 +48,8 @@ import rx.schedulers.Schedulers;
 public class LActivity extends AppCompatActivity {
 
     public ImageView imageView = null;
+    @InjectView ( R.id.email )
+    public AutoCompleteTextView button;
     private String tag = "tag";
     @OnClick ( R.id.email_sign_in_button )
     public void jumpRetrofit () {
@@ -60,6 +65,18 @@ public class LActivity extends AppCompatActivity {
         setContentView( R.layout.activity_login );
         ButterKnife.inject( this );
         RxAndRetrofit();
+
+        Action1< Void > action1 = new Action1< Void >() {
+
+            @Override
+            public void call ( Void inView ) {
+                Log.i( "tag", "clicl" );
+
+            }
+        };
+        RxView.clicks( button ) // 以 Observable 形式来反馈点击事件
+              //              .throttleFirst( 3300, TimeUnit.MILLISECONDS )
+              .subscribe( action1 );
     }
 
     public void RxAndRetrofit () {
