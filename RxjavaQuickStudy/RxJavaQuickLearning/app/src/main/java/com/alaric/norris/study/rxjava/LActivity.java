@@ -19,12 +19,18 @@ import android.widget.ImageView;
 import com.alaric.norris.study.retrofitstudy.ApiService;
 import com.alaric.norris.study.retrofitstudy.GetIpInfoResponse;
 import com.alaric.norris.study.retrofitstudy.RetrofitActivity;
+import com.alaric.norris.study.retrofitstudy.njbbs.applydemo.NJBBSService;
 import com.alaric.norris.study.rxjavastudy.RxJavaStudyActivity;
 import com.jakewharton.rxbinding.view.RxView;
+
+import java.io.IOException;
+import java.util.HashMap;
 
 import butterknife.ButterKnife;
 import butterknife.InjectView;
 import butterknife.OnClick;
+import retrofit2.Call;
+import retrofit2.Response;
 import retrofit2.Retrofit;
 import retrofit2.adapter.rxjava.RxJavaCallAdapterFactory;
 import retrofit2.converter.gson.GsonConverterFactory;
@@ -64,23 +70,113 @@ public class LActivity extends AppCompatActivity {
         super.onCreate( savedInstanceState );
         setContentView( R.layout.activity_login );
         ButterKnife.inject( this );
-        RxAndRetrofit();
+        //        RxAndRetrofit();
 
         Action1< Void > action1 = new Action1< Void >() {
 
             @Override
             public void call ( Void inView ) {
-                Log.i( "tag", "clicl" );
+                Log.i( "tag", "click" );
 
             }
         };
         RxView.clicks( button ) // 以 Observable 形式来反馈点击事件
               //              .throttleFirst( 3300, TimeUnit.MILLISECONDS )
               .subscribe( action1 );
+        njbbsApply();
+    }
+    private void njbbsApply () {
+        Retrofit mRetrofit = new Retrofit.Builder().baseUrl( NJBBSService.NJBBS_VERSION_URL )
+
+                                                   .addConverterFactory(
+                                                           GsonConverterFactory.create() )
+                                                   .build();
+        NJBBSService apiService = mRetrofit.create( NJBBSService.class );
+        final Call< Object > model = apiService.checkVersion( "chafang" );
+        new Thread() {
+
+            @Override
+            public void run () {
+
+                try {
+                    Response< Object > response = model.execute();
+                    Log.i( "tag", "response checkVersion" + response.body().toString() );
+                }
+                catch ( IOException inE ) {
+                    inE.printStackTrace();
+                }
+            }
+        }.start();
+        {
+            mRetrofit = new Retrofit.Builder().baseUrl( NJBBSService.CFAPI_URL )
+                                              .addConverterFactory( GsonConverterFactory.create() )
+                                              .build();
+            apiService = mRetrofit.create( NJBBSService.class );
+            final HashMap< String, String > mHashMap = new HashMap<>();
+            mHashMap.put( "method", "forum.sendAndroidDeviceInfo" );
+            mHashMap.put( "api_key", "android" );
+            mHashMap.put( "deviceid", "355848066910830" );
+            mHashMap.put( "city", "NJ" );
+            mHashMap.put( "v", "4.1.0" );
+            final Call< Object > a = apiService.sendAndroidDeviceInfo( mHashMap );
+
+            new Thread() {
+
+                @Override
+                public void run () {
+
+                    try {
+                        Response< Object > response = a.execute();
+                        Log.i( "tag", "response sendAndroidDeviceInfo" + response.toString() );
+                    }
+                    catch ( IOException inE ) {
+                        inE.printStackTrace();
+                    }
+                }
+            }.start();
+            mHashMap.clear();
+            mHashMap.put( "method", "user.getUserInfoById" );
+            mHashMap.put( "uid", "1431" );
+            final NJBBSService finalApiService = apiService;
+            new Thread() {
+
+                @Override
+                public void run () {
+
+                    try {
+                        Response< Object > response =
+                                finalApiService.getUserInfoById( mHashMap ).execute();
+                        Log.i( "tag", "response getUserInfoById" + response.toString() );
+                    }
+                    catch ( IOException inE ) {
+                        inE.printStackTrace();
+                    }
+                }
+            }.start();
+            mHashMap.clear();
+            mHashMap.put("method", "forum.getThreadInfoByID");
+            mHashMap.put( "id", "1431" );
+            new Thread() {
+
+                @Override
+                public void run () {
+
+                    try {
+                        Response< Object > response =
+                                finalApiService.getThreadInfoByID( mHashMap ).execute();
+                        Log.i( "tag", "response getThreadInfoByID" + response.toString() );
+                    }
+                    catch ( IOException inE ) {
+                        inE.printStackTrace();
+                    }
+                }
+            }.start();
+
+        }
+
     }
 
     public void RxAndRetrofit () {
-
         Retrofit retrofit = new Retrofit.Builder().baseUrl( "http://ip.taobao.com" )
                                                   .addConverterFactory(
                                                           GsonConverterFactory.create() )
@@ -97,7 +193,6 @@ public class LActivity extends AppCompatActivity {
                       }
                   } )
                   .subscribeOn( Schedulers.io() )
-
                   .observeOn( AndroidSchedulers.mainThread() )
                   .subscribe( new Subscriber< GetIpInfoResponse >() {
 
