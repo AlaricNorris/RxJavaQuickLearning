@@ -1,1 +1,1 @@
-include ':app', ':oldretrofitapi', ':NewRetrofitApi'
+include ':app', ':oldretrofitapi', ':NewRetrofitApi', ':MVPStudy'

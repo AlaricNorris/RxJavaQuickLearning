@@ -89,8 +89,7 @@ public class LActivity extends AppCompatActivity {
         Retrofit mRetrofit = new Retrofit.Builder().baseUrl( NJBBSService.NJBBS_VERSION_URL )
 
                                                    .addConverterFactory(
-                                                           GsonConverterFactory.create() )
-                                                   .build();
+                                                           GsonConverterFactory.create() ).build();
         NJBBSService apiService = mRetrofit.create( NJBBSService.class );
         final Call< Object > model = apiService.checkVersion( "chafang" );
         new Thread() {
@@ -112,6 +111,26 @@ public class LActivity extends AppCompatActivity {
                                               .addConverterFactory( GsonConverterFactory.create() )
                                               .build();
             apiService = mRetrofit.create( NJBBSService.class );
+
+        final Call< Object > model1 =
+                apiService.getThreadInfoByID( "forum.getThreadInfoByID", "1431" );
+        new Thread() {
+
+            @Override
+            public void run () {
+
+                try {
+                    Response< Object > response = model1.execute();
+                    Log.i(
+                            "tag",
+                            "response [params] getThreadInfoByID:" + response.body().toString()
+                    );
+                }
+                catch ( IOException inE ) {
+                    inE.printStackTrace();
+                }
+            }
+        }.start();
             final HashMap< String, String > mHashMap = new HashMap<>();
             mHashMap.put( "method", "forum.sendAndroidDeviceInfo" );
             mHashMap.put( "api_key", "android" );
@@ -154,7 +173,7 @@ public class LActivity extends AppCompatActivity {
                 }
             }.start();
             mHashMap.clear();
-            mHashMap.put("method", "forum.getThreadInfoByID");
+            mHashMap.put( "method", "forum.getThreadInfoByID" );
             mHashMap.put( "id", "1431" );
             new Thread() {
 

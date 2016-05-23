@@ -3,22 +3,21 @@ package com.alaric.norris.study.retrofit.latest;
 import android.animation.Animator;
 import android.animation.AnimatorListenerAdapter;
 import android.annotation.TargetApi;
-import android.content.pm.PackageManager;
-import android.support.annotation.NonNull;
-import android.support.design.widget.Snackbar;
-import android.support.v7.app.AppCompatActivity;
 import android.app.LoaderManager.LoaderCallbacks;
-
 import android.content.CursorLoader;
 import android.content.Loader;
+import android.content.pm.PackageManager;
 import android.database.Cursor;
 import android.net.Uri;
 import android.os.AsyncTask;
-
 import android.os.Build;
 import android.os.Bundle;
 import android.provider.ContactsContract;
+import android.support.annotation.NonNull;
+import android.support.design.widget.Snackbar;
+import android.support.v7.app.AppCompatActivity;
 import android.text.TextUtils;
+import android.util.Log;
 import android.view.KeyEvent;
 import android.view.View;
 import android.view.View.OnClickListener;
@@ -31,6 +30,17 @@ import android.widget.TextView;
 
 import java.util.ArrayList;
 import java.util.List;
+
+import okhttp3.ResponseBody;
+import retrofit2.Call;
+import retrofit2.Callback;
+import retrofit2.Response;
+import retrofit2.Retrofit;
+import retrofit2.converter.gson.GsonConverterFactory;
+import rx.Observable;
+import rx.Subscriber;
+import rx.android.schedulers.AndroidSchedulers;
+import rx.schedulers.Schedulers;
 
 import static android.Manifest.permission.READ_CONTACTS;
 
@@ -51,25 +61,75 @@ public class LoginActivity extends AppCompatActivity implements LoaderCallbacks<
     private static final String[] DUMMY_CREDENTIALS = new String[]{
             "foo@example.com:hello" , "bar@example.com:world"
     };
+    Retrofit mRetrofit;
     /**
      * Keep track of the login task to ensure we can cancel it if requested.
      */
     private UserLoginTask mAuthTask = null;
-
     // UI references.
     private AutoCompleteTextView mEmailView;
     private EditText mPasswordView;
     private View mProgressView;
     private View mLoginFormView;
-
     @Override
     protected void onCreate ( Bundle savedInstanceState ) {
         super.onCreate( savedInstanceState );
+        Retrofit retrofit = new Retrofit.Builder()
+                //这里建议：- Base URL: 总是以/结尾；- @Url: 不要以/开头
+                .baseUrl( "http://www.weather.com.cn/" ).build();
+        ApiStores apiStores = retrofit.create( ApiStores.class );
+        final Call< ResponseBody > call = apiStores.getWeather( "101010100" );
+
+        // TODO 同步调用
+        {
+            new Thread() {
+
+                @Override
+                public void run () {
+
+                    try {
+                        Response< ResponseBody > bodyResponse = call.execute();
+                        String body = bodyResponse.body().string();//获取返回体的字符串
+                        Log.i( "tag", "body=" + body );
+                    }
+                    catch ( Exception e ) {
+                        e.printStackTrace();
+                    }
+                }
+            }.start();
+        }
+        // TODO 异步调用
+        {
+            Call< ResponseBody > call1 = apiStores.getWeatherr( "202.202.33.33" );
+            call1.enqueue( new Callback< ResponseBody >() {
+
+                @Override
+                public void onResponse (
+                        Call< ResponseBody > call, Response< ResponseBody > response
+                ) {
+                    try {
+                        Log.i( "tag", "response=" + response.body().string() );
+                    }
+                    catch ( Exception e ) {
+                        e.printStackTrace();
+                    }
+
+                }
+                @Override
+                public void onFailure ( Call< ResponseBody > call, Throwable t ) {
+
+                    Log.i( "tag", "onFailure=" + t.getMessage() );
+                }
+            } );
+        }
+        getCarType();
+        getWeather();
+        getWeatherRxjava();
+
         setContentView( R.layout.activity_login );
         // Set up the login form.
         mEmailView = ( AutoCompleteTextView ) findViewById( R.id.email );
         populateAutoComplete();
-
         mPasswordView = ( EditText ) findViewById( R.id.password );
         mPasswordView.setOnEditorActionListener( new TextView.OnEditorActionListener() {
 
@@ -96,6 +156,81 @@ public class LoginActivity extends AppCompatActivity implements LoaderCallbacks<
         mProgressView = findViewById( R.id.login_progress );
     }
 
+    private void getWeatherRxjava () {
+        AppClient.ApiStores apiStores = AppClient.retrofitRX().create( AppClient.ApiStores.class );
+        Observable< WeatherJson > observable = apiStores.getWeatherRxjava( "101010100" );
+        observable.subscribeOn( Schedulers.io() )
+                  .observeOn( AndroidSchedulers.mainThread() )
+                  .subscribe( new Subscriber< WeatherJson >() {
+
+                      @Override
+                      public void onCompleted () {
+                          Log.i( "tag", "onCompleted" );
+                      }
+
+                      @Override
+                      public void onError ( Throwable e ) {
+                          Log.i( "tag", "e=" + e.getMessage() );
+                      }
+
+                      @Override
+                      public void onNext ( WeatherJson weatherJson ) {
+                          Log.i( "tag", "getWeatherinfo=" + weatherJson.getWeatherinfo() );
+                      }
+                  } );
+
+    }
+    private void getCarType () {
+        mRetrofit = new Retrofit.Builder().baseUrl( "http://WuXiaolong.me/" )
+                                          .addConverterFactory( GsonConverterFactory.create() )
+                                          .build();
+        ApiStores apiStores = mRetrofit.create( ApiStores.class );
+        ApiInfo apiInfo = new ApiInfo();
+        ApiInfo.ApiInfoBean apiInfoBean = apiInfo.new ApiInfoBean();
+        apiInfoBean.setApiKey( "666" );
+        apiInfoBean.setApiName( "WuXiaolong" );
+        apiInfo.setApiInfo( apiInfoBean );
+        Call< ResponseBody > call = apiStores.getCarType( apiInfo );
+        call.enqueue( new Callback< ResponseBody >() {
+
+            @Override
+            public void onResponse (
+                    Call< ResponseBody > call, Response< ResponseBody > response
+            ) {
+                String body = null;//获取返回体的字符串
+                Log.i( "tag", "getCarType response" + response.code() );
+                try {
+                    body = response.body().string();
+                }
+                catch ( Exception e ) {
+                    e.printStackTrace();
+                }
+                Log.i( "tag", "getCarType=" + body );
+            }
+            @Override
+            public void onFailure ( Call< ResponseBody > call, Throwable t ) {
+
+            }
+
+        } );
+    }
+    private void getWeather () {
+        AppClient.ApiStores apiStores = AppClient.retrofit().create( AppClient.ApiStores.class );
+        Call< WeatherJson > call = apiStores.getWeather( "101010100" );
+        call.enqueue( new Callback< WeatherJson >() {
+
+            @Override
+            public void onResponse (
+                    Call< WeatherJson > call, Response< WeatherJson > response
+            ) {
+                Log.i( "tag", "getWeatherinfo=" + response.body().getWeatherinfo() );
+            }
+            @Override
+            public void onFailure ( Call< WeatherJson > call, Throwable t ) {
+
+            }
+        } );
+    }
     private void populateAutoComplete () {
         if ( ! mayRequestContacts() ) {
             return;
@@ -118,7 +253,8 @@ public class LoginActivity extends AppCompatActivity implements LoaderCallbacks<
                         @Override
                         @TargetApi ( Build.VERSION_CODES.M )
                         public void onClick ( View v ) {
-                            requestPermissions( new String[]{ READ_CONTACTS }, REQUEST_READ_CONTACTS );
+                            requestPermissions(
+                                    new String[]{ READ_CONTACTS }, REQUEST_READ_CONTACTS );
                         }
                     } );
         }

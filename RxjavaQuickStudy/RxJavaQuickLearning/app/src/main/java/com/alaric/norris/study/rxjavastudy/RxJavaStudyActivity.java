@@ -45,7 +45,7 @@ import rx.schedulers.Schedulers;
  */
 public class RxJavaStudyActivity extends AppCompatActivity {
     public ImageView imageView = null;
-    private String tag = "nrs";
+    private String tag = "tag";
     @Override
     protected void onCreate ( @Nullable Bundle savedInstanceState ) {
         super.onCreate( savedInstanceState );

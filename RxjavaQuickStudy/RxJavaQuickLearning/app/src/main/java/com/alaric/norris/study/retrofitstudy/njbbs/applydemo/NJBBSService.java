@@ -46,6 +46,11 @@ public interface NJBBSService {
     @GET ( "/cf/index.php" )
     Call< Object > getThreadInfoByID ( @QueryMap Map< String, String > params );
 
+    @GET ( "/cf/index.php" )
+    Call< Object > getThreadInfoByID (
+            @Query ( "method" ) String method, @Query ( "id" ) String id
+    );
+
     @GET ( "/s" )
     Call< Object > manykey ( @QueryMap Map< String, String > options );
 }
