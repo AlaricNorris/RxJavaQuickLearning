@@ -9,6 +9,7 @@
  */
 package com.alaric.norris.cheesefactory.models;
 
+import java.io.Serializable;
 /**
 @formatter:off ClassName:      Milk
 @formatter:off Function:       ${TODO}  ADD FUNCTION
@@ -21,5 +22,16 @@ package com.alaric.norris.cheesefactory.models;
 @formatter:off Modifications:  ${TODO}
 @formatter:off ***************************************************************************************************
  */
-public class Milk {
+public class Milk implements Serializable {
+    public static long serialNumber = 11011200000L;
+
+    private long Serial = serialNumber;
+    public Milk () {
+        serialNumber++;
+        this.Serial = serialNumber;
+    }
+    @Override
+    public String toString () {
+        return "{Milk(Serial:" + Serial + ")}";
+    }
 }

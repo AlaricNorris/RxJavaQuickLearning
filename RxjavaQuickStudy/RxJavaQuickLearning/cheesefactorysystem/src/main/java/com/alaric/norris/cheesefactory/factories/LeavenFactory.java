@@ -11,13 +11,10 @@ package com.alaric.norris.cheesefactory.factories;
 
 import com.alaric.norris.cheesefactory.SYSOUtil;
 import com.alaric.norris.cheesefactory.biz.SuperMarket;
-import com.alaric.norris.cheesefactory.biz.WareHouse;
-import com.alaric.norris.cheesefactory.models.Cheese;
 import com.alaric.norris.cheesefactory.models.Leaven;
-import com.alaric.norris.cheesefactory.models.Milk;
 /**
  @formatter:off ClassName:      LeavenFactory
- @formatter:off Function:       ${TODO}  ADD FUNCTION
+ @formatter:off Function:       发酵剂
  @formatter:off Contact:        Norris.sly@gmail.com
  @formatter:off @author         AlaricNorris
  @formatter:off @version        Ver 1.0
@@ -37,22 +34,24 @@ public class LeavenFactory {
     public static LeavenFactory getInstance () {
         return ourInstance;
     }
-    public synchronized Cheese produceCheese ( Milk[] twoMilk, Leaven oneLeaven ) {
-        Cheese product = new Cheese();
+    public synchronized Leaven produceLeaven () {
+        Leaven product = new Leaven();
         SYSOUtil.println(
                 "[" + getClass().getSimpleName() + "]" + " Produced:\t" + product.toString() );
-        WareHouse.getInstance().storeCheese( product );
         ProductionCount++;
         return product;
     }
+    /**
+     * 生产线程
+     */
     public static class ProduceThread implements Runnable {
 
         public static ProduceThread mInstance;
-        CheeseFactory mCheeseFactory;
-        private ProduceThread ( CheeseFactory inCheeseFactory ) {
+        LeavenFactory mCheeseFactory;
+        private ProduceThread ( LeavenFactory inCheeseFactory ) {
             mCheeseFactory = inCheeseFactory;
         }
-        public static ProduceThread newInstance ( CheeseFactory inCheeseFactory ) {
+        public static ProduceThread newInstance ( LeavenFactory inCheeseFactory ) {
             if ( mInstance == null ) {
                 mInstance = new ProduceThread( inCheeseFactory );
             }
@@ -64,7 +63,7 @@ public class LeavenFactory {
                 if ( CheeseFactory.ProductionCount >= SuperMarket.IMPORT_SUMMARY ) {
                     return;
                 }
-                mCheeseFactory.produceCheese( null, null );
+                mCheeseFactory.produceLeaven();
             }
         }
     }
